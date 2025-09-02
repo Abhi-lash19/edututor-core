@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edututor"
+version = "0.1.0"
+description = "EduTutor MVP: explain, debug, and guide — never write the code."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Your Name", email = "you@example.com" }]
+dependencies = [
+  "pyside6>=6.6",
+  "python-dotenv>=1.0",
+  "requests>=2.32",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.5.0",
+  "black>=24.4.0",
+  "isort>=5.13.0",
+  "mypy>=1.10.0",
+  "types-requests>=2.32", # Provides type stubs for 'requests'
+  "pre-commit>=3.7.0",
+]
+
+# Black code formatter configuration
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+# Isort import sorter configuration (aligned with Black)
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+
+# Ruff linter and formatter configuration
+[tool.ruff]
+# File formatting rules (Ruff can now replace Black & isort)
+line-length = 100
+target-version = "py310"
+
+# Linting rules
+lint = {
+  # Select pylint, pyflakes, and pycodestyle error (E) and warning (W) codes.
+  select = ["E", "W", "F", "I"], # 'I' is for isort (import sorting)
+  # Ignore "Whitespace before ':'" (E203) as it conflicts with Black.
+  ignore = ["E203"],
+  # You can extend with more rulesets later:
+  # extend-select = ["B", "BLE", "C4", "DJ", ...]
+}
+
+# Pytest test runner configuration
+[tool.pytest.ini_options]
+addopts = "-q --disable-warnings" # Quiet, clean output
+testpaths = ["tests"]             # Where to look for tests
+
+# Mypy static type checker configuration
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+disallow_untyped_defs = true    # Encourage type annotations!
+no_implicit_optional = true     # Good strict practice
+check_untyped_defs = true
+# This is often necessary for GUI libraries like PySide6
+# as they may not have complete type stubs available.
+ignore_missing_imports = true
