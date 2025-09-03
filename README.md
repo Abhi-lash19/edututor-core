@@ -2,7 +2,7 @@
 
 ## Development Setup
 
-1. `git clone <[your-repo-url](https://github.com/Abhi-lash19/edututor-core.git)>`
+1. `git clone <(https://github.com/Abhi-lash19/edututor-core.git)>`
 2. `cd edututor`
 3. `python -m venv .venv`
 4. `source .venv/bin/activate` (or `.venv\Scripts\activate` on Windows)
