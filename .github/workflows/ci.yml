@@ -38,7 +38,7 @@ jobs:
       - name: Lint (ruff/black/isort)
         run: |
           ruff --version
-          ruff .
+          ruff check .          # ✅ FIXED: Added 'check' subcommand
           black --check .
           isort --check-only .
 
