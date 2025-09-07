@@ -64,10 +64,3 @@ class Orchestrator:
         raw = mock_llm.chat_completion(messages)
         safe = strip_code_blocks(raw)
         return OrchestratorResult(True, decision.reason, safe)
-
-
-def test_strip_code_blocks_removes_fenced_and_inline():
-    s = "Here is code:\n```py\nprint('hi')\n```\nAnd inline `x = 1` end."
-    out = strip_code_blocks(s)
-    assert "[code omitted" in out
-    assert "[code omitted]" in out

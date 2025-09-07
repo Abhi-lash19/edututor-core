@@ -111,7 +111,7 @@ class MainWindow(QMainWindow):
         root_layout = QHBoxLayout(root)
         root_layout.setContentsMargins(8, 8, 8, 8)
 
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Horizontal)  # type: ignore[attr-defined]
 
         # ----- LEFT: Chat area -----
         left_container = QWidget()
