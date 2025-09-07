@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, List
+from typing import Any, Dict, List
+
+from .base import BaseLLM, LLMResponse
 
 # canned replies (kept simple and deterministic for tests)
 _ERROR_REPLY = (
@@ -31,30 +33,13 @@ _INTENT_RE = re.compile(r"intent\s*:\s*([a-z0-9_ ]+)", flags=re.IGNORECASE)
 
 
 def _normalize_intent_name(raw: str) -> str:
-    """
-    Normalize intent names to an UPPERCASE single-token form,
-    e.g. "explain code" -> "EXPLAIN_CODE".
-    """
+    """Normalize an intent string (e.g., 'explain code' -> 'EXPLAIN_CODE')."""
     return raw.strip().upper().replace(" ", "_")
 
 
 def chat_completion(messages: List[Dict[str, str]], *, temperature: float = 0.2) -> str:
-    """
-    Deterministic mock for local tests.
-
-    Behavior:
-    - Finds the last user message's content and tries to detect an explicit
-      `INTENT: <name>` tag (case-insensitive). If found, returns the canned
-      response for that intent.
-    - If no explicit intent tag is present, falls back to keyword heuristics:
-      - "error", "traceback", etc. -> error reply
-      - otherwise -> concept-style reply
-
-    This function is intentionally simple and deterministic for reproducible tests.
-    """
     last_user = ""
     for m in reversed(messages):
-        # defensive: messages are expected to be dicts with 'role' and 'content'
         if not isinstance(m, dict):
             continue
         role = m.get("role", "")
@@ -63,10 +48,8 @@ def chat_completion(messages: List[Dict[str, str]], *, temperature: float = 0.2)
             break
 
     if not last_user:
-        # nothing from user -> concept fallback
         return _CONCEPT_REPLY
 
-    # Look for explicit "INTENT: ..." tag anywhere in the user's content.
     match = _INTENT_RE.search(last_user)
     if match:
         intent_raw = match.group(1)
@@ -77,13 +60,36 @@ def chat_completion(messages: List[Dict[str, str]], *, temperature: float = 0.2)
             return _EXPLAIN_CODE_REPLY
         if intent == "CONCEPT":
             return _CONCEPT_REPLY
-        # unknown explicit intent -> fall back to concept
         return _CONCEPT_REPLY
 
-    # No explicit tag — use simple keyword heuristics on the user content:
     user_lower = last_user.lower()
     if any(k in user_lower for k in ("error", "exception", "traceback", "segmentation fault")):
         return _ERROR_REPLY
 
-    # Default fallback: concept-style reply
     return _CONCEPT_REPLY
+
+
+class MockLLM(BaseLLM):
+    """Deterministic mock LLM used for local dev and CI."""
+
+    def send(self, *, prompt: str, intent: Any, max_tokens: int | None = None) -> LLMResponse:
+        """
+        Return canned replies according to the provided intent. Keep the replies
+        consistent with the chat_completion() helper and the tests' expectations.
+        """
+        lower = str(intent).lower() if intent is not None else "unknown"
+
+        if "concept" in lower:
+            text = _CONCEPT_REPLY
+        elif "error" in lower:
+            text = _ERROR_REPLY
+        elif "explain" in lower or "explain_code" in lower:
+            text = _EXPLAIN_CODE_REPLY
+        else:
+            # Generic fallback (keeps content clear that mock won't provide solutions)
+            text = (
+                "I am a tutor assistant. I can explain concepts, guide debugging, and "
+                "ask Socratic questions, but I will not write complete solutions."
+            )
+
+        return LLMResponse(text=text, raw={"mock_intent": str(intent)})

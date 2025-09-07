@@ -1,44 +1,46 @@
+# src/edututor/core/orchestrator.py
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Optional
 
-from ..llm import mock as mock_llm
+from edututor.llm import make_provider
+from edututor.llm.base import BaseLLM, LLMResponse
+
+from . import sanitizer
 from .classifiers import ClassifiedIntent, Intent, classify_intent
-from .policy import SYSTEM_PROMPT, TutorDecision, decide_response
-from .sanitizer import strip_code_blocks
+from .policy import decide_response
 
 
-@dataclass
+@dataclass(frozen=True)
 class OrchestratorResult:
+    """Result returned to callers and tests (keeps compatibility with tests)."""
+
     allowed: bool
     reason: str
     content: str
+    intent: Optional[Intent] = None
 
 
 class Orchestrator:
     """
-    Minimal orchestrator for MVP Day-1/2:
-    - classify
-    - decide via policy
-    - call mock LLM if allowed
-    - sanitize response
+    Orchestrator glue: classify -> policy -> LLM provider -> sanitize -> return.
+    The `provider` can be injected for tests; by default we use make_provider().
     """
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, provider: BaseLLM | None = None) -> None:
+        # allow dependency injection for tests; default factory uses env
+        self.provider: BaseLLM = provider or make_provider()
 
     def handle_user_message(
-        self,
-        text: str,
-        *,
-        user_hint: Optional[Intent] = None,
+        self, text: str, *, user_hint: Optional[Intent] = None
     ) -> OrchestratorResult:
         ci: ClassifiedIntent = classify_intent(text, user_hint=user_hint)
-        decision: TutorDecision = decide_response(ci)
+        decision = decide_response(ci)
 
-        if not decision.allowed:
-            # Build a refusal response using templates.
+        # Policy-level disallow -> return a templated refusal (no LLM call)
+        if not getattr(decision, "allowed", True):
+            # Build a refusal response using templates (format to plain text).
             lines = [
                 "I can’t provide code or full solutions.",
                 "Reason: " + decision.reason,
@@ -46,21 +48,32 @@ class Orchestrator:
                 "Let’s proceed by understanding the problem instead:",
             ]
             # short Socratic nudge:
-            lines.extend(f"- {q}" for q in decision.questions)
+            lines.extend(f"- {q}" for q in (getattr(decision, "questions", ()) or ()))
             content = "\n".join(lines)
-            return OrchestratorResult(False, decision.reason, content)
 
-        # Allowed → craft a structured prompt for the model.
-        # IMPORTANT: include an explicit intent tag so downstream LLM adapters
-        # (and our mock) can deterministically return the right style.
-        # e.g., "INTENT: CONCEPT\nUser question: explain recursion"
-        intent_tag = ci.intent.name  # CONCEPT / ERROR / EXPLAIN_CODE / UNKNOWN
-        user_msg = f"INTENT: {intent_tag}\n\nUser: {text}"
+            result = OrchestratorResult(
+                allowed=False,
+                reason=decision.reason,
+                content=content,
+                intent=ci.intent,
+            )
+            return result
 
-        messages: List[Dict[str, str]] = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_msg},
-        ]
-        raw = mock_llm.chat_completion(messages)
-        safe = strip_code_blocks(raw)
-        return OrchestratorResult(True, decision.reason, safe)
+        # Allowed -> craft a structured prompt for the model using the scaffold
+        scaffold = getattr(decision, "scaffold", "")
+        prompt = scaffold or ""
+
+        # Ask the provider for a response
+        llm_resp: LLMResponse = self.provider.send(prompt=prompt, intent=ci.intent)
+        sanitized = sanitizer.sanitize(llm_resp.text or "")
+
+        if not sanitized.strip():
+            sanitized = "[content removed: empty after sanitization]"
+
+        result = OrchestratorResult(
+            allowed=True,
+            reason=decision.reason,
+            content=sanitized,
+            intent=ci.intent,
+        )
+        return result

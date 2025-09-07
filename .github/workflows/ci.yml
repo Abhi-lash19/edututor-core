@@ -69,8 +69,10 @@ jobs:
       - name: Security audit with pip-audit
         continue-on-error: true
         run: |
-          echo "=== Running security audit ==="
-          pip-audit --desc on
+          echo "=== pip-audit (optional) ==="
+          python -m pip install pip-audit
+          python -m pip_audit --version
+          python -m pip_audit
 
   test:
     name: Tests (Python ${{ matrix.python-version }})
