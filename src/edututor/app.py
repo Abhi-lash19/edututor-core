@@ -35,9 +35,20 @@ APP_NAME = "EduTutor"
 def resource_path(name: str) -> Path:
     """
     Find assets relative to the project root (assets/...). Useful for icons.
+
+    Assumes the repository layout:
+      <repo-root>/
+        assets/
+        src/
+          edututor/
+            app.py
+
+    This computes the repo root explicitly (two levels above this file) and
+    returns the path to the requested asset.
     """
-    here = Path(__file__).resolve().parent.parent
-    return here.parent / "assets" / name
+    # src/edututor/app.py  -> parents[0]=src/edututor, parents[1]=src, parents[2]=repo root
+    repo_root = Path(__file__).resolve().parents[2]
+    return repo_root / "assets" / name
 
 
 class MainWindow(QMainWindow):
