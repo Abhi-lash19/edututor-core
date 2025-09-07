@@ -168,6 +168,3 @@ jobs:
           ls -la dist/
           pip install dist/*.whl
           python -c "import edututor; print('Package imported successfully')"
-          
-
-
