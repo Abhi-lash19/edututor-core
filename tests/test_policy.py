@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from edututor.core.classifiers import Intent, ClassifiedIntent
+from edututor.core.classifiers import ClassifiedIntent, Intent
 from edututor.core.policy import decide_response
 
 

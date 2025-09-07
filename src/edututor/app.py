@@ -7,23 +7,23 @@ from pathlib import Path
 from typing import Optional
 
 # Qt widgets and helpers
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QIcon, QKeySequence, QFont, QAction
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction, QFont, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
+    QFileDialog,
+    QHBoxLayout,
     QLabel,
     QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QSplitter,
-    QTextEdit,
+    QMessageBox,
     QPlainTextEdit,
     QPushButton,
-    QMessageBox,
-    QToolBar,
+    QSplitter,
     QStatusBar,
-    QFileDialog,
+    QTextEdit,
+    QToolBar,
+    QVBoxLayout,
+    QWidget,
 )
 
 # Import orchestrator you added in PR#2 (mock-backed)
@@ -47,9 +47,6 @@ class MainWindow(QMainWindow):
       - Right: Code editor (monospace) + 'Explain This' button
       - Top toolbar: Exam Mode toggle, Save/Load code, Clear transcript
       - Status bar: provider/exam-mode hints
-
-    This is still a lightweight test UI (not the final polished design),
-    but it's good for manual QA of guardrails/orchestrator behavior.
     """
 
     def __init__(self) -> None:
@@ -130,7 +127,9 @@ class MainWindow(QMainWindow):
         # Input area (multi-line)
         self.input_box = QTextEdit()
         self.input_box.setFixedHeight(120)
-        self.input_box.setPlaceholderText("Ask a question (e.g. 'explain recursion' or paste an error)...")
+        self.input_box.setPlaceholderText(
+            "Ask a question (e.g. 'explain recursion' or paste an error')..."
+        )
         left_layout.addWidget(self.input_box, stretch=1)
 
         # Bottom row: Send & Quick category buttons
@@ -156,7 +155,6 @@ class MainWindow(QMainWindow):
         br_layout.addWidget(self.btn_explain)
 
         left_layout.addWidget(bottom_row, stretch=0)
-
         splitter.addWidget(left_container)
 
         # ----- RIGHT: Code editor -----
@@ -171,7 +169,9 @@ class MainWindow(QMainWindow):
         monospace = QFont("Consolas" if os.name == "nt" else "Courier")
         monospace.setPointSize(11)
         self.code_box.setFont(monospace)
-        self.code_box.setPlaceholderText("# Paste code here to ask 'Explain This' (no edits will be made)")
+        self.code_box.setPlaceholderText(
+            "# Paste code here to ask 'Explain This' (no edits will be made)"
+        )
         right_layout.addWidget(self.code_box, stretch=7)
 
         code_btn_row = QWidget()
@@ -188,7 +188,6 @@ class MainWindow(QMainWindow):
         cbr.addWidget(copy_to_input)
 
         right_layout.addWidget(code_btn_row, stretch=0)
-
         splitter.addWidget(right_container)
 
         # give left more initial space
@@ -230,9 +229,11 @@ class MainWindow(QMainWindow):
         text = self.input_box.toPlainText().strip()
         if not text:
             return
+
         # show user message
         self._append_transcript("You", text)
         self.input_box.clear()
+
         # Call orchestrator (mock-backed) and display reply
         res = self.orchestrator.handle_user_message(text)
         if res.allowed:
@@ -247,7 +248,12 @@ class MainWindow(QMainWindow):
         Convenience methods that add a small hint label to the input then send.
         Helps testing the classifier's response to user UI hints.
         """
-        mapping = {"concept": " (hint:concept)", "error": " (hint:error)", "explain": " (hint:explain)"}
+        mapping = {
+            "concept": " (hint:concept)",
+            "error": " (hint:error)",
+            "explain": " (hint:explain)",
+        }
+
         current = self.input_box.toPlainText()
         self.input_box.setPlainText(current + mapping.get(hint, ""))
 
@@ -263,7 +269,9 @@ class MainWindow(QMainWindow):
 
         code = self.code_box.toPlainText().strip()
         if not code:
-            QMessageBox.information(self, "Explain This", "Please paste code in the right pane first.")
+            QMessageBox.information(
+                self, "Explain This", "Please paste code in the right pane first."
+            )
             return
 
         # for the mock/orchestrator, include a hint phrase so classifier treats it as EXPLAIN_CODE
@@ -296,7 +304,9 @@ class MainWindow(QMainWindow):
 
     def _save_code_to_file(self) -> None:
         """Save the right-hand code box to a file (convenience for QA)."""
-        path, _ = QFileDialog.getSaveFileName(self, "Save Code", filter="*.py;;*.txt;;All Files (*)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save Code", filter="*.py;;*.txt;;All Files (*)"
+        )
         if not path:
             return
         try:
@@ -308,7 +318,9 @@ class MainWindow(QMainWindow):
 
     def _load_code_from_file(self) -> None:
         """Load code into the right-hand editor from disk (useful for longer snippets)."""
-        path, _ = QFileDialog.getOpenFileName(self, "Open Code", filter="*.py;;*.txt;;All Files (*)")
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Open Code", filter="*.py;;*.txt;;All Files (*)"
+        )
         if not path:
             return
         try:

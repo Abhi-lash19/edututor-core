@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import Tuple
 
-from .classifiers import ClassifiedIntent, Intent
 from . import templates
-
+from .classifiers import ClassifiedIntent, Intent
 
 SYSTEM_PROMPT = """You are EduTutor, a strict but helpful computer science tutor.
 Your mission is to foster deep understanding, not to provide finished solutions or code.

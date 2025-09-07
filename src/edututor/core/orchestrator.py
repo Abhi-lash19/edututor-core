@@ -1,13 +1,12 @@
-
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
+from ..llm import mock as mock_llm
 from .classifiers import ClassifiedIntent, Intent, classify_intent
 from .policy import SYSTEM_PROMPT, TutorDecision, decide_response
 from .sanitizer import strip_code_blocks
-from ..llm import mock as mock_llm
 
 
 @dataclass
@@ -29,7 +28,12 @@ class Orchestrator:
     def __init__(self) -> None:
         pass
 
-    def handle_user_message(self, text: str, *, user_hint: Optional[Intent] = None) -> OrchestratorResult:
+    def handle_user_message(
+        self,
+        text: str,
+        *,
+        user_hint: Optional[Intent] = None,
+    ) -> OrchestratorResult:
         ci: ClassifiedIntent = classify_intent(text, user_hint=user_hint)
         decision: TutorDecision = decide_response(ci)
 
@@ -60,3 +64,10 @@ class Orchestrator:
         raw = mock_llm.chat_completion(messages)
         safe = strip_code_blocks(raw)
         return OrchestratorResult(True, decision.reason, safe)
+
+
+def test_strip_code_blocks_removes_fenced_and_inline():
+    s = "Here is code:\n```py\nprint('hi')\n```\nAnd inline `x = 1` end."
+    out = strip_code_blocks(s)
+    assert "[code omitted" in out
+    assert "[code omitted]" in out

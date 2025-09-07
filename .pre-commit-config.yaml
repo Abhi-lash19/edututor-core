@@ -1,17 +1,45 @@
+# .pre-commit-config.yaml
+# Opinionated pre-commit pipeline tuned for Python projects using:
+# - isort (import sorting, black-compatible)
+# - black (formatting)
+# - ruff (lint + auto-fix)
+# Also include a few lightweight hygiene hooks (EOF fixer, trailing whitespace).
+
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.7
+  # Basic repo hygiene (end-of-file, trailing whitespace, permissions)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
     hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-  - repo: https://github.com/psf/black
-    rev: 24.8.0
-    hooks:
-      - id: black
-        args: [--line-length=100]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+
+  # Sort imports first. Use black-compatible profile so isort & black don't fight.
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
     hooks:
       - id: isort
-        args: [--profile=black, --line-length=100]
+        name: isort (python)
+        args: ["--profile", "black", "--line-length", "100"]
+
+  # Run Black to format files in a canonical way (line-length kept at 100).
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        args: ["--line-length=100"]
+
+  # Ruff: fast linter + auto-fixer. We run lint with --fix to apply fixes.
+  # Ruff can also format, but here we run it after black to catch additional lints
+  # and autofix style/flake issues. Using ruff-pre-commit wrapper ensures a
+  # pinned wheel is used for speed/portability.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # You can `pre-commit autoupdate` to bump this in the future.
+    rev: v0.12.12
+    hooks:
+      - id: ruff
+        name: ruff (lint + fix)
+        args: ["--fix", "--line-length=100"]
+      - id: ruff-format
+        # optional: keep if you want ruff's formatter as an additional guard
+        args: ["--line-length=100"]

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from edututor.core.classifiers import Intent
 from edututor.core.orchestrator import Orchestrator
 
 

@@ -8,10 +8,11 @@ from typing import Optional
 
 class Intent(Enum):
     """High-level user intent categories the app understands."""
-    CONCEPT = auto()          # "Explain recursion"
-    ERROR = auto()            # "What does this traceback mean?"
-    EXPLAIN_CODE = auto()     # "Explain my quicksort function"
-    DISALLOWED = auto()       # "Write/implement the code for X"
+
+    CONCEPT = auto()  # "Explain recursion"
+    ERROR = auto()  # "What does this traceback mean?"
+    EXPLAIN_CODE = auto()  # "Explain my quicksort function"
+    DISALLOWED = auto()  # "Write/implement the code for X"
     UNKNOWN = auto()
 
 
@@ -36,17 +37,13 @@ _DISALLOWED_RE = re.compile(
 
 # If the user supplies their own code and wants an explanation,
 # we try to detect that as EXPLAIN_CODE.
-_EXPLAIN_RE = re.compile(
-    r"(?i)\b(explain|walk\ me\ through|annotate|what\ does\ this)\b"
-)
+_EXPLAIN_RE = re.compile(r"(?i)\b(explain|walk\ me\ through|annotate|what\ does\ this)\b")
 
 _ERROR_RE = re.compile(
     r"(?i)\b(error|exception|traceback|stack\ trace|segmentation\ fault|undefined\ reference)\b"
 )
 
-_CONCEPT_RE = re.compile(
-    r"(?i)\b(explain|what\ is|how\ does|teach|overview|concept|intuition)\b"
-)
+_CONCEPT_RE = re.compile(r"(?i)\b(explain|what\ is|how\ does|teach|overview|concept|intuition)\b")
 
 
 @dataclass(frozen=True)
@@ -73,13 +70,19 @@ def classify_intent(text: str, *, user_hint: Optional[Intent] = None) -> Classif
     t = text.strip()
 
     if _DISALLOWED_RE.search(t):
-        return ClassifiedIntent(Intent.DISALLOWED, "Matched disallowed request for code/solution", user_hint)
+        return ClassifiedIntent(
+            Intent.DISALLOWED,
+            "Matched disallowed request for code/solution",
+            user_hint,
+        )
 
     # If user hinted explicitly in the UI, respect that when plausible.
     if user_hint in (Intent.CONCEPT, Intent.ERROR, Intent.EXPLAIN_CODE):
         # Double-check we aren't obviously disallowed.
         if _DISALLOWED_RE.search(t):
-            return ClassifiedIntent(Intent.DISALLOWED, "Hinted intent but disallowed content", user_hint)
+            return ClassifiedIntent(
+                Intent.DISALLOWED, "Hinted intent but disallowed content", user_hint
+            )
         return ClassifiedIntent(user_hint, f"User hinted {user_hint.name}", user_hint)
 
     # Heuristics without hint (order matters):
@@ -91,19 +94,40 @@ def classify_intent(text: str, *, user_hint: Optional[Intent] = None) -> Classif
     #    to code/implementation, treat as EXPLAIN_CODE. This avoids misclassifying
     #    "explain my function step by step" as a generic concept question.
     code_indicators = re.compile(
-        r"(?ix)\b(function|method|snippet|this code|this function|my function|my method|class|module)\b"
+        r"""
+    (?ix)
+    \b(
+        function |
+        method |
+        snippet |
+        this\ code |
+        this\ function |
+        my\ function |
+        my\ method |
+        class |
+        module
+    )\b
+    """,
+        re.VERBOSE,
     )
-    if code_indicators.search(t) or _EXPLAIN_RE.search(t) and code_indicators.search(t):
-        return ClassifiedIntent(Intent.EXPLAIN_CODE, "Matched explain-code phrasing / code indicators", user_hint)
+
+    # parenthesize to make precedence explicit:
+    if code_indicators.search(t) or (_EXPLAIN_RE.search(t) and code_indicators.search(t)):
+        return ClassifiedIntent(
+            Intent.EXPLAIN_CODE,
+            "Matched explain-code phrasing / code indicators",
+            user_hint,
+        )
 
     # 3) Concept patterns (e.g., "explain recursion", "what is a hash table")
     if _CONCEPT_RE.search(t):
         return ClassifiedIntent(Intent.CONCEPT, "Matched concept phrasing", user_hint)
 
-    # 4) Generic explain patterns fallback to EXPLAIN_CODE when they include 'this' with code mention,
-    #    otherwise UNKNOWN.
+    # 4) Generic explain patterns fallback to EXPLAIN_CODE when they mention "this" along
+    #    with code indicators. Otherwise treat as a generic explain/code explanation.
     if _EXPLAIN_RE.search(t):
-        # if text contains words like 'this' and 'code' then it's code explain; else treat as explain-code by default
+        # if text contains words like 'this' and 'code' then it's code explain; else treat
+        # as explain-code by default
         return ClassifiedIntent(Intent.EXPLAIN_CODE, "Matched explain-style phrasing", user_hint)
 
     return ClassifiedIntent(Intent.UNKNOWN, "No pattern matched", user_hint)

@@ -57,3 +57,13 @@ def test_error_requests(prompt: str) -> None:
 def test_explain_code_requests(prompt: str) -> None:
     ci = classify_intent(prompt)
     assert ci.intent == Intent.EXPLAIN_CODE
+
+
+def test_hint_respected():
+    ci = classify_intent("some question", user_hint=Intent.CONCEPT)
+    assert ci.intent == Intent.CONCEPT
+
+
+def test_code_indicators_detected():
+    ci = classify_intent("can you walk me through this function?")
+    assert ci.intent == Intent.EXPLAIN_CODE

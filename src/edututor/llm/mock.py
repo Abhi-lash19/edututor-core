@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict
+from typing import Dict, List
 
 
 def chat_completion(messages: List[Dict[str, str]], *, temperature: float = 0.2) -> str:
