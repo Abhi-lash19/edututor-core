@@ -132,7 +132,7 @@ jobs:
             coverage.xml
 
       - name: Upload coverage to Codecov
-        if: success() && ${{ secrets.CODECOV_TOKEN != '' }}
+        if: success() && github.ref == 'refs/heads/main'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -169,4 +169,5 @@ jobs:
           pip install dist/*.whl
           python -c "import edututor; print('Package imported successfully')"
           
+
 
