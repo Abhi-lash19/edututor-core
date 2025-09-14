@@ -69,7 +69,7 @@ A **persistence layer** using SQLite and SQLAlchemy stores conversation history.
 ### 1. Clone and set up virtual environment
 
 ```powershell
-git clone https://github.com/<your-org>/edututor.git
+git clone https://github.com/Abhi-lash19/edututor-core.git
 cd edututor
 
 python -m venv .venv
