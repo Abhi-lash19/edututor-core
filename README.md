@@ -1,11 +1,11 @@
-# EduTutor 🎓🤖
+# EduTutor 🎓
 **EduTutor** is an interactive AI tutor designed to help learners **explain code, debug errors, and explore computer science concepts**.
 It features a **PySide6 GUI**, a modular **orchestrator layer**, and supports pluggable **LLM providers** (mock, OpenAI, DeepSeek, etc.).
 A **persistence layer** using SQLite and SQLAlchemy stores conversation history.
 
 ---
 
-## 📐 Architecture
+## Architecture
 
 ### Component Overview
 
@@ -46,7 +46,7 @@ A **persistence layer** using SQLite and SQLAlchemy stores conversation history.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Language:** Python 3.10+
 - **GUI:** [PySide6](https://doc.qt.io/qtforpython/)
@@ -64,7 +64,7 @@ A **persistence layer** using SQLite and SQLAlchemy stores conversation history.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Clone and set up virtual environment
 
@@ -107,7 +107,7 @@ python -m pip_audit
 
 ---
 
-## 🔄 CI/CD Pipeline
+## CI/CD Pipeline
 
 GitHub Actions powers continuous integration:
 
@@ -118,7 +118,7 @@ GitHub Actions powers continuous integration:
 - **Build Verification:**
         Builds source and wheel (`python -m build`), verifies install and import.
 
-✅ Ensures style, safety, type correctness, tests, and package integrity on every PR and push to main.
+Ensures style, safety, type correctness, tests, and package integrity on every PR and push to main.
 
 ---
 
@@ -146,11 +146,11 @@ pyproject.toml           # Build, lint, type check config
 
 ---
 
-## 📊 Project Status
+## Project Status
 
-- ✅ Core orchestrator, policy, sanitizer, classifier
-- ✅ Mock LLM + OpenAI integration
-- ✅ Persistence layer
-- ✅ PySide6 GUI
-- ✅ CI/CD pipeline
+- Core orchestrator, policy, sanitizer, classifier
+- Mock LLM + OpenAI integration
+- Persistence layer
+- PySide6 GUI
+- CI/CD pipeline
 - 🔜 Planned: Expand resources, add more LLM providers, enhance UX
